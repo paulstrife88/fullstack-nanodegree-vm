@@ -32,8 +32,17 @@ h1, h2 {
 	width: 100%;
 }
 
+.flash {
+	font-size: 11px;
+	color: red;
+}
+
 .left {
 	float: left;
+}
+
+.right {
+	float: right;
 }
 
 .categories {

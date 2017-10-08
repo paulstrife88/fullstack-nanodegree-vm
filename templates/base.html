@@ -15,6 +15,13 @@
 	<nav class="nav">
 		<a href="{{ url_for('home') }}">Home</a>
 		{% block nav %}{% endblock %}
+		<span class="right">
+			{% if session['logged_in'] %}
+			{{ session['email'] }} <a href="{{ url_for('logout') }}">Logout</a>
+			{% else %}
+			<a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('signup') }}">Signup</a>
+			{% endif %}
+		</span>
 	</nav>
 	<main class="main">
 		<aside class="left categories">
@@ -22,6 +29,17 @@
 			<ul>{% block aside %}{% endblock %}</ul>
 		</aside>
 		<section class="left items">
+			<span class="flash">
+				{% with messages = get_flashed_messages() %}
+					{% if messages %}
+					<p>
+						{% for message in messages %}
+						<strong> {{ message }} </strong> 
+						{% endfor %}
+					</p>
+					{% endif %}
+				{% endwith %}
+			</span>
 			<h2>{% block section %}{% endblock %}</h2>
 			{% block content %}{% endblock %}
 		</section>

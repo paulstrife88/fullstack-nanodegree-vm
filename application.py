@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, g, abort, flash
+from flask import session as login_session
 from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, User, Category, Item
@@ -13,6 +14,55 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 categories = session.query(Category)
+
+@auth.verify_password
+def verify_password(email, password):
+	user = session.query(User).filter_by(email=email).first()
+	if not user or not user.verify_password(password):
+		return False
+		#g.user = user
+	return True
+
+@app.route('/signup/', methods=['GET', 'POST'])
+def signup():
+	if request.method == 'POST':
+		email = request.form['email']
+		password = request.form['password']
+		if email is None or password is None:
+			abort(400)
+		if session.query(User).filter_by(email=email).first() is not None:
+			abort(400)
+		user = User(email = email)
+		user.auth_method = 'local'
+		user.hash_password(password)
+		session.add(user)
+		session.commit()
+		return redirect(url_for('login'))
+	else:
+		return render_template('signup.html')
+
+@app.route('/login/', methods=['GET','POST'])
+def login():
+	if request.method == 'POST':
+		email = request.form['email']
+		password = request.form['password']
+		if verify_password(email, password):
+			login_session['email'] = email
+			login_session['logged_in'] = True
+			flash('Logged in succesfully')
+			return redirect(url_for('home'))
+		else:
+			flash('Something went wrong, incorrect email or username')
+			return render_template('login.html')
+	else:
+		return render_template('login.html')
+
+@app.route('/logout/')
+def logout():
+	login_session.pop('email', None)
+	login_session.pop('logged_in', None)
+	return redirect(url_for('home'))
+
 #Routes for the web application
 @app.route('/')
 @app.route('/categories/')
@@ -38,6 +88,7 @@ def showCategory(category_id):
 	return render_template('showCategory.html', categories=categories, category=category, items=items)
 
 @app.route('/categories/<int:category_id>/edit/', methods=['GET', 'POST'])
+@auth.login_required
 def editCategory(category_id):
 	category = session.query(Category).filter_by(id = category_id).one()
 	if request.method == 'POST':
@@ -102,10 +153,6 @@ def deleteItem(category_id, item_id):
 		return redirect(url_for('showCategory', category_id=category.id))
 	else:
 		return render_template('deleteItem.html', categories=categories, category=category, item=item)
-
-@app.route('/login/')
-def login():
-	return "Login page"
 
 #Below are the routes for API
 @app.route('/api/v1/categories/new', methods=['GET', 'POST'])
