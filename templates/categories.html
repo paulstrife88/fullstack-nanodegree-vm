@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Categories{% endblock %}
+{% block nav %}| <a href="{{ url_for('newCategory') }}">New Category</a>{% endblock %}
+
+
+{% block aside %}
+{% for category in categories %}
+	<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
+{% endfor %}
+{% endblock %}
+
+{% block section %}Last Added Items{% endblock %}
+
+{% block content %}
+{% for item in items %}
+
+<p>
+	<h3>{{ item.name }}</h3>
+	{{ item.category }}
+</p>
+{% endfor %}
+{% endblock %}
