@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Edit an item{% endblock %}
+{% block header %}Edit an item{% endblock %}
+{% block nav %}
+| <a href="{{ url_for('showItem', category_id=category.id, item_id=item.id) }}">Cancel</a>
+{% endblock %}
+
+{% block aside %}
+{% for category in categories %}
+	<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
+{% endfor %}
+{% endblock %}
+
+{% block section %}Edit Item Form{% endblock %}
+
+{% block content %}
+	<form action="{{ url_for('editItem', category_id = category.id, item_id = item.id )}}" method='post'>
+		<p>Name:</p>
+		<input type='text' size='50' name='name' value="{{ item.name }}" required>
+		<p>Category:</p>
+		<select name='category' required>
+			{% for i in categories %}
+			{% if i.id == item.category_id %}
+			<option value="{{i.id}}" selected>{{i.name}}</option>
+			{% else %}
+    		<option value="{{i.id}}">{{i.name}}</option>
+    		{% endif %}
+    		{% endfor %}
+  		</select>
+		<p>Description:</p>
+		<textarea name='description' rows="10" cols="25" required>{{ item.description }}</textarea>
+		</br>
+		<input type='submit' value='Edit'>
+	</form>
+{% endblock %}

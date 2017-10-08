@@ -15,8 +15,8 @@
 {% for item in items %}
 
 <p>
-	<h3>{{ item.name }}</h3>
-	{{ item.category }}
+	<h3><a href="{{ url_for('showItem', category_id=item.category_id, item_id=item.id) }}">{{ item.name }}</a></h3>
+	<i>Category: <a href="{{ url_for('showCategory',  category_id=item.category_id) }}">{{ item.category.name }}</a></i>
 </p>
 {% endfor %}
 {% endblock %}
