@@ -11,9 +11,10 @@
 {% block section %}New Category Form{% endblock %}
 
 {% block content %}
-	<form action="{{ url_for('newCategory' )}}" method='post'>
+	<form action="{{ url_for('newCategory' )}}" method="post">
 		<p>Name:</p>
-		<input type='text' size='50' name='name'>
-		<input type='submit' value='Create'>
+		<input type="text" size="50" name="name" required>
+		<input name="csrf" type="hidden" value="{{ session['state'] }}">
+		<input type="submit" value="Create">
 	</form>
 {% endblock %}

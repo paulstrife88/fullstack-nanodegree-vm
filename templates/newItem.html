@@ -14,9 +14,9 @@
 {% block section %}New Item Form{% endblock %}
 
 {% block content %}
-	<form action="{{ url_for('newItem', category_id = category.id)}}" method='post'>
+	<form action="{{ url_for('newItem', category_id = category.id)}}" method="post">
 		<p>Name:</p>
-		<input type='text' size='50' name='name' required>
+		<input type="text" size="50" name="name" required>
 		<p>Category:</p>
 		<select name="category" required>
 			{% for i in categories %}
@@ -28,8 +28,9 @@
     		{% endfor %}
   		</select>
 		<p>Description:</p>
-		<textarea name='description' rows="10" cols="25" required></textarea>
+		<textarea name="description" rows="10" cols="25" maxlength="250" required></textarea>
 		</br>
-		<input type='submit' value='Create'>
+		<input name="csrf" type="hidden" value="{{ session['state'] }}">
+		<input type="submit" value="Create">
 	</form>
 {% endblock %}

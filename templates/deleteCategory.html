@@ -14,8 +14,9 @@
 {% block section %}Delete {{ category.name }}{% endblock %}
 
 {% block content %}
-	<form action="{{url_for('deleteCategory', category_id=category.id)}}" method='post'>
+	<form action="{{url_for('deleteCategory', category_id=category.id)}}" method="post">
 		<p><h2>Are you sure you want to delete {{category.name}}?</h2></p>
-		<input type='submit', value='Delete'>
+		<input type="submit", value="Delete">
+		<input name="csrf" type="hidden" value="{{ session['state'] }}">
 	</form>
 {% endblock %}

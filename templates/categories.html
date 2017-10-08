@@ -18,11 +18,13 @@
 {% block section %}Last Added Items{% endblock %}
 
 {% block content %}
+<ul>
 {% for item in items %}
-
-<p>
+<li>
 	<h3><a href="{{ url_for('showItem', category_id=item.category_id, item_id=item.id) }}">{{ item.name }}</a></h3>
 	<i>Category: <a href="{{ url_for('showCategory',  category_id=item.category_id) }}">{{ item.category.name }}</a></i>
-</p>
+</li>
+<br>
 {% endfor %}
+</ul>
 {% endblock %}
