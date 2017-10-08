@@ -2,9 +2,11 @@
 {% block title %}{{ category.name }}{% endblock %}
 {% block header %}{{ category.name }}{% endblock %}
 {% block nav %}
+{% if session['logged_in'] %}
 | <a href="{{ url_for('newItem', category_id=category.id) }}">Add Item</a> 
 | <a href="{{ url_for('editCategory', category_id=category.id) }}">Edit Category</a> 
 | <a href="{{ url_for('deleteCategory', category_id=category.id) }}">Delete Category</a>
+{% endif %}
 {% endblock %}
 
 {% block aside %}

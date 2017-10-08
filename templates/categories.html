@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Categories{% endblock %}
-{% block nav %}| <a href="{{ url_for('newCategory') }}">New Category</a>{% endblock %}
+
+{% block nav %}
+{% if session['logged_in'] %}
+| <a href="{{ url_for('newCategory') }}">New Category</a>
+{% endif %}
+{% endblock %}
+
 
 
 {% block aside %}

@@ -2,8 +2,10 @@
 {% block title %}{{ category.name }} > {{ item.name }}{% endblock %}
 {% block header %}{{ category.name }} > {{ item.name }}{% endblock %}
 {% block nav %}
+{% if session['logged_in'] %}
 | <a href="{{ url_for('editItem', category_id=category.id, item_id=item.id) }}">Edit Item</a> 
 | <a href="{{ url_for('deleteItem', category_id=category.id, item_id=item.id) }}">Delete Item</a>
+{% endif %}
 {% endblock %}
 
 {% block aside %}

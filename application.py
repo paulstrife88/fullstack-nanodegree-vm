@@ -49,6 +49,8 @@ def login():
 		if verify_password(email, password):
 			login_session['email'] = email
 			login_session['logged_in'] = True
+			state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+			login_session['state'] = state
 			flash('Logged in succesfully')
 			return redirect(url_for('home'))
 		else:
@@ -61,6 +63,7 @@ def login():
 def logout():
 	login_session.pop('email', None)
 	login_session.pop('logged_in', None)
+	login_session.pop('state', None)
 	return redirect(url_for('home'))
 
 #Routes for the web application
@@ -72,6 +75,9 @@ def home():
 
 @app.route('/categories/new', methods=['GET', 'POST'])
 def newCategory():
+	if 'email' not in login_session:
+		flash('You need to be logged in to perform this action.')
+		return redirect(url_for('login'))
 	if request.method == 'POST':
 		newCategory = Category(name = request.form['name'])
 		session.add(newCategory)
@@ -88,8 +94,10 @@ def showCategory(category_id):
 	return render_template('showCategory.html', categories=categories, category=category, items=items)
 
 @app.route('/categories/<int:category_id>/edit/', methods=['GET', 'POST'])
-@auth.login_required
 def editCategory(category_id):
+	if 'email' not in login_session:
+		flash('You need to be logged in to perform this action.')
+		return redirect(url_for('login'))
 	category = session.query(Category).filter_by(id = category_id).one()
 	if request.method == 'POST':
 		category.name = request.form['name']
@@ -101,6 +109,9 @@ def editCategory(category_id):
 
 @app.route('/categories/<int:category_id>/delete/', methods=['GET', 'POST'])
 def deleteCategory(category_id):
+	if 'email' not in login_session:
+		flash('You need to be logged in to perform this action.')
+		return redirect(url_for('login'))
 	category = session.query(Category).filter_by(id = category_id).one()
 	if request.method == 'POST':
 		session.delete(category)
@@ -111,6 +122,9 @@ def deleteCategory(category_id):
 
 @app.route('/categories/<int:category_id>/items/new/', methods=['GET', 'POST'])
 def newItem(category_id):
+	if 'email' not in login_session:
+		flash('You need to be logged in to perform this action.')
+		return redirect(url_for('login'))
 	category = session.query(Category).filter_by(id = category_id).one()
 	if request.method == 'POST':
 		newItem = Item(name = request.form['name'],
@@ -130,6 +144,9 @@ def showItem(category_id, item_id):
 
 @app.route('/categories/<int:category_id>/items/<int:item_id>/edit/', methods=['GET', 'POST'])
 def editItem(category_id, item_id):
+	if 'email' not in login_session:
+		flash('You need to be logged in to perform this action.')
+		return redirect(url_for('login'))
 	category = session.query(Category).filter_by(id = category_id).one()
 	item = session.query(Item).filter_by(id = item_id).one()
 	if request.method == 'POST':
@@ -144,6 +161,9 @@ def editItem(category_id, item_id):
 
 @app.route('/categories/<int:category_id>/items/<int:item_id>/delete/', methods=['GET', 'POST'])
 def deleteItem(category_id, item_id):
+	if 'email' not in login_session:
+		flash('You need to be logged in to perform this action.')
+		return redirect(url_for('login'))
 	category = session.query(Category).filter_by(id = category_id).one()
 	item = session.query(Item).filter_by(id = item_id).one()
 	if request.method == 'POST':
