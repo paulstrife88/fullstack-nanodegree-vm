@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, g, abort, flash
+from flask import Flask, render_template, request, redirect, url_for, g, abort, flash, jsonify
 from flask import session as login_session
 from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
@@ -23,7 +23,6 @@ def verify_password(email, password):
 	user = session.query(User).filter_by(email=email).first()
 	if not user or not user.verify_password(password):
 		return False
-		#g.user = user
 	return True
 
 @app.route('/signup/', methods=['GET', 'POST'])
@@ -36,7 +35,6 @@ def signup():
 		if session.query(User).filter_by(email=email).first() is not None:
 			abort(400)
 		user = User(email = email)
-		user.auth_method = 'local'
 		user.hash_password(password)
 		session.add(user)
 		session.commit()
@@ -51,9 +49,10 @@ def login():
 	if request.method == 'POST':
 		email = request.form['email']
 		password = request.form['password']
-		if verify_password(email, password):
+		if verify_password(email, password) and login_session['state'] == request.form['state']:
 			login_session['email'] = email
 			login_session['logged_in'] = True
+			login_session['auth_method'] = 'local'
 			flash('Logged in succesfully')
 			return redirect(url_for('home'))
 		else:
@@ -82,16 +81,12 @@ def oauth2callback():
 			login_session['email'] = result['email']
 			login_session['auth_method'] = 'google'
 			login_session['logged_in'] = True
-			flash('Logged in succesfully')
-			return redirect(url_for('home'))
 		else:
 			user = User(email = email)
 			login_session['auth_method'] = 'google'
 			session.add(user)
 			session.commit()
-			return redirect(url_for('home'))
-		print result
-		login_session['access_token'] = access_token
+		flash('Logged in succesfully')
 		return redirect(url_for('home'))
 
 @app.route('/logout/')
@@ -100,7 +95,6 @@ def logout():
 		url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
 		h = httplib2.Http()
 		result = h.request(url, 'GET')[0]
-		print result
 		if result == '200':
 			login_session.pop('access_token', None)
 	login_session.pop('email', None)
@@ -235,38 +229,99 @@ def deleteItem(category_id, item_id):
 		return render_template('deleteItem.html', categories=categories, category=category, item=item)
 
 #Below are the routes for API
-@app.route('/api/v1/categories/new', methods=['GET', 'POST'])
-def newCategoryAPI():
-	return "Create a new category"
+@app.route('/api/v1/categories/')
+@auth.login_required
+def showCategoriesAPI():
+	return jsonify(Category = [i.serialize for i in categories])
 
 @app.route('/api/v1/categories/<int:category_id>/')
 @app.route('/api/v1/categories/<int:category_id>/items/')
+@auth.login_required
 def showCategoryAPI(category_id):
-	return "Show the items within a given category"
+	category = session.query(Category).filter_by(id = category_id).one()
+	items = session.query(Item).filter_by(category_id = category.id)	
+	return jsonify(Category = [category.serialize, [i.serialize for i in items]])
 
-@app.route('/api/v1/categories/<int:category_id>/edit/', methods=['GET', 'POST'])
+@app.route('/api/v1/categories/new/', methods=['POST'])
+@auth.login_required
+def newCategoryAPI():
+	name = request.json.get('name')
+	if name is None:
+		abort(400)
+	if session.query(Category).filter_by(name=name).first() is not None:
+		return jsonify({'message':'category already exists'})
+	category = Category(name=name)
+	session.add(category)
+	session.commit()
+	return jsonify(Category = [category.serialize], message='category succesfully created'), 201
+
+@app.route('/api/v1/categories/<int:category_id>/edit/', methods=['POST'])
+@auth.login_required
 def editCategoryAPI(category_id):
-	return "Edit a given category"
+	name = request.json.get('name')
+	if name is None:
+		abort(400)
+	category = session.query(Category).filter_by(id=category_id).first()
+	category.name = name
+	session.add(category)
+	session.commit()
+	return jsonify(Category = [category.serialize], message='category succesfully edited'), 200
 
-@app.route('/api/v1/categories/<int:category_id>/delete/', methods=['GET', 'POST'])
+@app.route('/api/v1/categories/<int:category_id>/delete/', methods=['POST'])
+@auth.login_required
 def deleteCategoryAPI(category_id):
-	return "Delete a category"
+	category = session.query(Category).filter_by(id=category_id).first()
+	session.delete(category)
+	session.commit()
+	return jsonify(Category = [category.serialize], message='category succesfully deleted'), 200
 
-@app.route('/api/v1/categories/<int:category_id>/items/new/', methods=['GET', 'POST'])
-def newItemAPI(category_id):
-	return "Create a new item"
-
+@app.route('/api/v1/items/<int:item_id>/')
 @app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/')
-def showItemAPI(category_id, item_id):
-	return "Show the items within a given item"
+@auth.login_required
+def showItemAPI(item_id, *args, **kwargs):
+	item = session.query(Item).filter_by(id = item_id).one()
+	category = session.query(Category).filter_by(id = item.category_id).one()
+	return jsonify(Category = [category.serialize], Item = [item.serialize])
 
-@app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/edit/', methods=['GET', 'POST'])
+@app.route('/api/v1/categories/<int:category_id>/items/new/', methods=['POST'])
+@auth.login_required
+def newItemAPI(category_id):
+	name = request.json.get('name')
+	description = request.json.get('description')
+	if name is None:
+		abort(400)
+	if session.query(Item).filter_by(name=name).first() is not None:
+		return jsonify({'message':'item already exists'})
+	item = Item(name=name, description=description, category_id=category_id)
+	session.add(item)
+	session.commit()
+	return jsonify(Item = [item.serialize], message='item succesfully created'), 201
+
+@app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/edit/', methods=['POST'])
+@auth.login_required
 def editItemAPI(category_id, item_id):
-	return "Edit a given item"
+	name = request.json.get('name')
+	description = request.json.get('description')
+	newCategory_id = request.json.get('category_id')
+	if name is None:
+		abort(400)
+	item = session.query(Item).filter_by(id=item_id).first()
+	item.name = name
+	item.description = description
+	item.category_id = newCategory_id
+	session.add(item)
+	session.commit()
+	category = session.query(Category).filter_by(id=newCategory_id).one()
+	return jsonify(Category = [category.serialize], Item = [item.serialize], message='item succesfully edited'), 200
 
-@app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/delete/', methods=['GET', 'POST'])
+@app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/delete/', methods=['POST'])
+@auth.login_required
 def deleteItemAPI(category_id, item_id):
-	return "Delete a item"
+	item = session.query(Item).filter_by(id = item_id).one()
+	category = session.query(Category).filter_by(id = category_id).one()
+	session.delete(item)
+	session.commit()
+	return jsonify(Category = [category.serialize], message='item succesfully deleted'), 200
 
 if __name__ == '__main__':
 	app.config['SECRET_KEY'] = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
