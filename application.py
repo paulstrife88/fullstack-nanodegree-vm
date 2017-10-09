@@ -279,7 +279,10 @@ def deleteCategoryAPI(category_id):
 @app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/')
 @auth.login_required
 def showItemAPI(item_id, *args, **kwargs):
-	item = session.query(Item).filter_by(id = item_id).one()
+	try:
+		item = session.query(Item).filter_by(id = item_id).first()
+	except:
+		return jsonify(message='item not found')
 	category = session.query(Category).filter_by(id = item.category_id).one()
 	return jsonify(Category = [category.serialize], Item = [item.serialize])
 
@@ -300,27 +303,33 @@ def newItemAPI(category_id):
 @app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/edit/', methods=['POST'])
 @auth.login_required
 def editItemAPI(category_id, item_id):
-	name = request.json.get('name')
-	description = request.json.get('description')
-	newCategory_id = request.json.get('category_id')
-	if name is None:
-		abort(400)
-	item = session.query(Item).filter_by(id=item_id).first()
-	item.name = name
-	item.description = description
-	item.category_id = newCategory_id
-	session.add(item)
-	session.commit()
-	category = session.query(Category).filter_by(id=newCategory_id).one()
+	try:
+		item = session.query(Item).filter_by(id = item_id).first()
+		name = request.json.get('name')
+		description = request.json.get('description')
+		newCategory_id = request.json.get('category_id')
+		if name is None:
+			abort(400)
+		item.name = name
+		item.description = description
+		item.category_id = newCategory_id
+		session.add(item)
+		session.commit()
+		category = session.query(Category).filter_by(id=newCategory_id).one()
+	except:
+		return jsonify(message='item not found')
 	return jsonify(Category = [category.serialize], Item = [item.serialize], message='item succesfully edited'), 200
 
 @app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/delete/', methods=['POST'])
 @auth.login_required
 def deleteItemAPI(category_id, item_id):
-	item = session.query(Item).filter_by(id = item_id).one()
-	category = session.query(Category).filter_by(id = category_id).one()
-	session.delete(item)
-	session.commit()
+	try:
+		item = session.query(Item).filter_by(id = item_id).first()
+		category = session.query(Category).filter_by(id = category_id).one()
+		session.delete(item)
+		session.commit()
+	except:
+		return jsonify(message='item not found')
 	return jsonify(Category = [category.serialize], message='item succesfully deleted'), 200
 
 if __name__ == '__main__':
