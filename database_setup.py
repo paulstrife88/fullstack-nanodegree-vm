@@ -14,7 +14,6 @@ class User(Base):
 	id = Column(Integer, primary_key = True)
 	email = Column(String(50), nullable = False)
 	password_hash = Column(String(64))
-	auth_method = Column(String(10), nullable = False)
 
 	def hash_password(self, password):
 		self.password_hash = pwd_context.encrypt(password)

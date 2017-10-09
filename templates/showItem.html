@@ -14,8 +14,10 @@
 {% endfor %}
 {% endblock %}
 
-{% block section %}{{ item.name }}{% endblock %}
+{% block section %}Item Details{% endblock %}
 
 {% block content %}
+<br>
+<h2>{{ item.name }}</h2>
 <p><h4>Description:</h4>{{ item.description }}</p>
 {% endblock %}

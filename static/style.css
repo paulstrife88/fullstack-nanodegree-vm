@@ -1,3 +1,9 @@
+html {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+}
+
 body {
 	margin: 0;
 	padding: 0;
@@ -13,7 +19,7 @@ h1, h2, h3 {
 .header {
 	margin: 0;
 	padding: 1%;
-	background-color: #aabbcc;
+	background-color: #c4b7a6;
 	height: 100px;
 
 }
@@ -21,14 +27,13 @@ h1, h2, h3 {
 .nav {
 	margin: 0;
 	padding: 0.5em;
-	background-color: #ccddee;
+	background-color: #e6e2d3;
 }
 
 .main {
 	margin: 0;
 	padding: 0;
-	background-color: #bbccdd;
-	height: auto;
+	height: 100%;
 	width: 100%;
 }
 
@@ -44,9 +49,15 @@ h1, h2, h3 {
 	float: right;
 }
 
+.categories a, .items a {
+	color: white;
+}
+
 .categories {
+	height: 98%;
 	width: 23%;
 	padding: 1%;
+	background-color: #b9936c;
 }
 
 .categories li {
@@ -58,7 +69,9 @@ h1, h2, h3 {
 }
 
 .items {
-	width: 73%%;
+	background-color: #dac292;
+	height: 98%;
+	width: 73%;
 	padding: 1%;
 }
 
@@ -69,7 +82,7 @@ h1, h2, h3 {
 footer {
 	margin: 0;
 	padding: 1em;
-	background-color: #ccddee;
+	background-color: #e6e2d3;
 	height: auto;
 	text-align: center;
 }

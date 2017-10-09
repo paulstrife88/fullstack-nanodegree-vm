@@ -4,7 +4,10 @@ from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, User, Category, Item
 from flask_httpauth import HTTPBasicAuth
-import random, string
+import random, string, json, httplib2
+import requests
+
+from oauth2client import client
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -43,24 +46,63 @@ def signup():
 
 @app.route('/login/', methods=['GET','POST'])
 def login():
+	state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
+	login_session['state'] = state
 	if request.method == 'POST':
 		email = request.form['email']
 		password = request.form['password']
 		if verify_password(email, password):
 			login_session['email'] = email
 			login_session['logged_in'] = True
-			state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
-			login_session['state'] = state
 			flash('Logged in succesfully')
 			return redirect(url_for('home'))
 		else:
 			flash('Something went wrong, incorrect email or username')
-			return render_template('login.html')
+			return render_template('login.html', STATE=state)
 	else:
-		return render_template('login.html')
+		return render_template('login.html', STATE=state)
+
+@app.route('/oauth2callback/')
+def oauth2callback():
+	flow = client.flow_from_clientsecrets(
+		'client_secrets.json',
+		scope='openid email profile',
+		redirect_uri=url_for('oauth2callback', _external=True))
+	if 'code' not in request.args:
+		auth_uri = flow.step1_get_authorize_url()
+		return redirect(auth_uri)
+	else:
+		auth_code = request.args.get('code')
+		credentials = flow.step2_exchange(auth_code)
+		login_session['access_token'] = credentials.access_token
+		url = ('https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=%s' % login_session['access_token'])
+		h = httplib2.Http()
+		result = json.loads(h.request(url, 'GET')[1])
+		if session.query(User).filter_by(email=result['email']).first() is not None:
+			login_session['email'] = result['email']
+			login_session['auth_method'] = 'google'
+			login_session['logged_in'] = True
+			flash('Logged in succesfully')
+			return redirect(url_for('home'))
+		else:
+			user = User(email = email)
+			login_session['auth_method'] = 'google'
+			session.add(user)
+			session.commit()
+			return redirect(url_for('home'))
+		print result
+		login_session['access_token'] = access_token
+		return redirect(url_for('home'))
 
 @app.route('/logout/')
 def logout():
+	if login_session['auth_method'] == 'google':
+		url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+		h = httplib2.Http()
+		result = h.request(url, 'GET')[0]
+		print result
+		if result == '200':
+			login_session.pop('access_token', None)
 	login_session.pop('email', None)
 	login_session.pop('logged_in', None)
 	login_session.pop('state', None)

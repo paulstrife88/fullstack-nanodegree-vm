@@ -28,7 +28,7 @@
     		{% endfor %}
   		</select>
 		<p>Description:</p>
-		<textarea name="description" rows="10" cols="25" maxlength="250" required></textarea>
+		<textarea name="description" rows="5" cols="50" maxlength="250" required></textarea>
 		</br>
 		<input name="csrf" type="hidden" value="{{ session['state'] }}">
 		<input type="submit" value="Create">
