@@ -3,9 +3,9 @@
 {% block header %}Add a new category{% endblock %}
 
 {% block aside %}
-{% for category in categories %}
-	<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
-{% endfor %}
+	{% for category in categories %}
+		<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
+	{% endfor %}
 {% endblock %}
 
 {% block section %}New Category Form{% endblock %}

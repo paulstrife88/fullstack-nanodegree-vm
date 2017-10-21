@@ -2,13 +2,13 @@
 {% block title %}Edit an item{% endblock %}
 {% block header %}Edit an item{% endblock %}
 {% block nav %}
-| <a href="{{ url_for('showItem', category_id=category.id, item_id=item.id) }}">Cancel</a>
+	| <a href="{{ url_for('showItem', category_id=category.id, item_id=item.id) }}">Cancel</a>
 {% endblock %}
 
 {% block aside %}
-{% for category in categories %}
-	<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
-{% endfor %}
+	{% for category in categories %}
+		<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
+	{% endfor %}
 {% endblock %}
 
 {% block section %}Edit Item Form{% endblock %}
@@ -29,7 +29,7 @@
   		</select>
 		<p>Description:</p>
 		<textarea name="description" rows="5" cols="50" maxlength="250" required>{{ item.description }}</textarea>
-		</br>
+		<br>
 		<input name="csrf" type="hidden" value="{{ session['state'] }}">
 		<input type="submit" value="Edit">
 	</form>

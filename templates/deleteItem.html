@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ category.name }} > {{ item.name }}{% endblock %}
 {% block nav %}
-| <a href="{{ url_for('editItem', category_id=category.id, item_id=item.id) }}">Edit Category</a> 
-| <a href="{{ url_for('showItem', category_id=category.id, item_id=item.id) }}">Cancel</a>
+	| <a href="{{ url_for('editItem', category_id=category.id, item_id=item.id) }}">Edit Category</a> 
+	| <a href="{{ url_for('showItem', category_id=category.id, item_id=item.id) }}">Cancel</a>
 {% endblock %}
 
 {% block aside %}
-{% for category in categories %}
-	<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
-{% endfor %}
+	{% for category in categories %}
+		<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
+	{% endfor %}
 {% endblock %}
 
 {% block section %}Delete {{ item.name }}{% endblock %}

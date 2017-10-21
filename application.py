@@ -108,8 +108,8 @@ def oauth2callback():
         auth_code = request.args.get('code')
         credentials = flow.step2_exchange(auth_code)
         login_session['access_token'] = credentials.access_token
-        url = ('https://www.googleapis.com/oauth2/v1/userinfo?\
-                alt=json&access_token=%s' % login_session['access_token'])
+        url = ('https://www.googleapis.com/oauth2/v1/userinfo?'
+               'alt=json&access_token=%s' % login_session['access_token'])
         h = httplib2.Http()
         result = json.loads(h.request(url, 'GET')[1])
         if session.query(User).filter_by(
