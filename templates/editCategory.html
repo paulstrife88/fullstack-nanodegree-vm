@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ category.name }}{% endblock %}
+{% block nav %}
+	| <a href="{{ url_for('deleteCategory', category_id=category.id) }}">Delete Category</a> 
+	| <a href="{{ url_for('showCategory', category_id=category.id) }}">Cancel</a>
+{% endblock %}
+{% block header %}{{ category.name }}{% endblock %}
+
+{% block aside %}
+	{% for category in categories %}
+		<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
+	{% endfor %}
+{% endblock %}
+
+{% block section %}Edit {{ category.name }}{% endblock %}
+
+{% block content %}
+	<form action="{{ url_for('editCategory', category_id=category.id )}}" method="post">
+		<p>Name:</p>
+		<input type="text" size="50" name="name" value="{{ category.name }}" required>
+		<input name="csrf" type="hidden" value="{{ session['state'] }}">
+		<input type="submit" value="Edit">
+	</form>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ category.name }} > {{ item.name }}{% endblock %}
+{% block header %}{{ category.name }} > {{ item.name }}{% endblock %}
+{% block nav %}
+	{% if session['logged_in'] %}
+		| <a href="{{ url_for('editItem', category_id=category.id, item_id=item.id) }}">Edit Item</a> 
+		| <a href="{{ url_for('deleteItem', category_id=category.id, item_id=item.id) }}">Delete Item</a>
+	{% endif %}
+{% endblock %}
+
+{% block aside %}
+	{% for category in categories %}
+		<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
+	{% endfor %}
+{% endblock %}
+
+{% block section %}Item Details{% endblock %}
+
+{% block content %}
+	<br>
+	<h2>{{ item.name }}</h2>
+	<p><h4>Description:</h4>{{ item.description }}</p>
+{% endblock %}

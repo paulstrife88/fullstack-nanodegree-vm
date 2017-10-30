@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Add a new item{% endblock %}
+{% block header %}Add a new item{% endblock %}
+{% block nav %}
+	| <a href="{{ url_for('showCategory',  category_id = category.id) }}">Cancel</a>
+{% endblock %}
+
+{% block aside %}
+	{% for category in categories %}
+		<li><a href="{{ url_for('showCategory',  category_id = category.id) }}">{{ category.name }}</li></a>
+	{% endfor %}
+{% endblock %}
+
+{% block section %}New Item Form{% endblock %}
+
+{% block content %}
+	<form action="{{ url_for('newItem', category_id = category.id)}}" method="post">
+		<p>Name:</p>
+		<input type="text" size="50" name="name" required>
+		<p>Category:</p>
+		<select name="category" required>
+			{% for i in categories %}
+			{% if i.id == category.id %}
+			<option value="{{i.id}}" selected>{{i.name}}</option>
+			{% else %}
+    		<option value="{{i.id}}">{{i.name}}</option>
+    		{% endif %}
+    		{% endfor %}
+  		</select>
+		<p>Description:</p>
+		<textarea name="description" rows="5" cols="50" maxlength="250" required></textarea>
+		<br>
+		<input name="csrf" type="hidden" value="{{ session['state'] }}">
+		<input type="submit" value="Create">
+	</form>
+{% endblock %}

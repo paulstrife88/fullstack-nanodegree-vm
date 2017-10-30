@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block header %}{% endblock %}
+
+{% block aside %}
+{% endblock %}
+
+{% block section %}Login{% endblock %}
+
+{% block content %}
+	<form action="{{ url_for('login')}}" method="post">
+		<p>E-mail Address:</p>
+		<input type="text" size="50" name="email">
+		<p>Password:</p>
+		<input type="password" size="50" name="password">
+		</br></br>
+		<input type="submit" value="Login">
+		<input name="csrf" type="hidden" value="{{ session['state'] }}">
+	</form>
+	<br>
+	<div class="googleButton">
+		<a href="{{ url_for('oauth2callback') }}">Google</a>
+	</div>
+{% endblock %}
