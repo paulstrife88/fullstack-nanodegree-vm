@@ -6,48 +6,53 @@
 	<link href="https://fonts.googleapis.com/css?family=Encode+Sans+Expanded" rel="stylesheet">
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	{% block login %}{% endblock %}
+	<!-- {% block logn %}{% endblock %} -->
 </head>
 <body>
-	<header class="header">
-		<h1>Catalog App</h1>
-		<h2>{% block header %}{% endblock %}</h2>
-	</header>
-	<nav class="nav">
-		<a href="{{ url_for('home') }}">Home</a>
-		{% block nav %}{% endblock %}
-		<span class="right">
-			{% if session['logged_in'] %}
-			{{ session['email'] }} <a href="{{ url_for('logout') }}">Logout</a>
-			{% else %}
-			<a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('signup') }}">Signup</a>
-			{% endif %}
-		</span>
-	</nav>
-	<main class="main">
-		<aside class="left categories">
-			<h2>Categories</h2>
-			<ul>{% block aside %}{% endblock %}</ul>
-		</aside>
-		<section class="left items">
-			<span class="flash">
-				{% with messages = get_flashed_messages() %}
-					{% if messages %}
-					<p>
-						{% for message in messages %}
-						<strong> {{ message }} </strong> 
-						{% endfor %}
-					</p>
-					{% endif %}
-				{% endwith %}
+	<div class="wrapper">
+		<header class="header">
+			<h1>Catalog App</h1>
+			<h2>{% block header %}{% endblock %}</h2>
+		</header>
+		<nav class="nav">
+			<a href="{{ url_for('home') }}">Home</a>
+			{% block nav %}{% endblock %}
+			<span class="right">
+				{% if session['logged_in'] %}
+				{{ session['email'] }} <a href="{{ url_for('logout') }}">Logout</a>
+				{% else %}
+				<a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('signup') }}">Signup</a>
+				{% endif %}
 			</span>
-			<h2>{% block section %}{% endblock %}</h2>
-			{% block content %}{% endblock %}
-		</section>
-		<div class="clear"></div>
-	</main>
-	<footer>
-		Created by Paolo Caracciolo.
-	</footer>
+		</nav>
+		<main class="main">
+			{% block login %}
+			<aside class="categories">
+				<h2>Categories</h2>
+				<ul>{% block aside %}{% endblock %}</ul>
+			</aside>
+			<div class="vertical-line"></div>
+			<section class="items">
+				<span class="flash">
+					{% with messages = get_flashed_messages() %}
+						{% if messages %}
+						<p>
+							{% for message in messages %}
+							<strong> {{ message }} </strong> 
+							{% endfor %}
+						</p>
+						{% endif %}
+					{% endwith %}
+				</span>
+				<h2>{% block section %}{% endblock %}</h2>
+				{% block content %}{% endblock %}
+			</section>
+			{% endblock %}
+			<div class="clear"></div>
+		</main>
+		<footer>
+			Created by Paolo Caracciolo.
+		</footer>
+	</div>
 </body>
 </html>
