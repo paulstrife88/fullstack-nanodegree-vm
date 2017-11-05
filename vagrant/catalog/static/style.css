@@ -46,11 +46,11 @@ nav a:link, nav a:visited {
 
 .right {
 	float: right;
+	color: #ffffff;
 }
 
 .main {
 	margin-top: 2em;
-	height: 50%;
 	width: calc(100% - 2px);
 	background-color: #ffffff;
 	display: flex;
@@ -62,7 +62,11 @@ nav a:link, nav a:visited {
 }
 
 .flash {
-	font-size: 11px;
+	margin-top: 1em;
+	font-size: 12px;
+	text-align: center;
+	display: block;
+	height: 0;
 }
 
 .categories {
@@ -81,13 +85,22 @@ nav a:link, nav a:visited {
 .login {
 	padding: 2%;
 	flex: 0 0 46%;
+	height: 90%;
 	text-align: center;
+}
+
+.signup {
 	margin: auto;
 }
 
+.oauth-links {
+	list-style: none;
+	padding: 0;
+	text-align: center;
+}
+
 .vertical-line {
-	height: 90%;
-	margin: auto;
+	margin: 2.5% 0 2.5% 0;
 	flex: 0 0 1px;
 	background-color: #cdcdcd;
 }

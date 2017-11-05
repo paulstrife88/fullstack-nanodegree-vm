@@ -1,14 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock %}
+{% block meta %}
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+{% endblock %}
 {% block header %}{% endblock %}
 
 {% block aside %}
 {% endblock %}
 
-{% block section %}Login{% endblock %}
-
 {% block login %}
 	<section class="login">
+		<h2>Login with local account</h2>
 		<form action="{{ url_for('login')}}" method="post">
 			<p>E-mail Address:</p>
 			<input type="text" size="50" name="email">
@@ -16,13 +18,51 @@
 			<input type="password" size="50" name="password">
 			</br></br>
 			<input type="submit" value="Login">
-			<input name="csrf" type="hidden" value="{{ session['state'] }}">
+			<input name="csrf" type="hidden" value="{{ STATE }}">
 		</form>
 	</section>
 	<div class="vertical-line"></div>
 	<section class="login">
-		<div class="googleButton">
-			<a href="{{ url_for('oauth2callback') }}">Google</a>
-		</div>
+		<h2>Login with OAuth</h2>
+		<ul class="oauth-links">
+			<li>
+				<span class="g-signin"
+					data-clientid="461388696720-nub5l002l36qo35h2og07h2505kk6e5s.apps.googleusercontent.com"
+					data-scope="openid email profile"
+					data-accesstype="offline"
+					data-redirecturi="postmessage"
+					data-state="{{ STATE }}"
+					data-cookiepolicy="single_host_origin"
+					data-callback="onSuccess"
+					data-approvalprompt="force">
+					</span>
+			</li>
+		</ul>
 	</section>
+
+	<script>
+		function onSuccess(authResult) {
+			if (authResult['code']) {
+				$.ajax({
+					type: 'POST',
+					url: '/oauth2callback/?state=' + authResult['state'],
+					processData: false,
+					data: authResult['code'],
+					contentType: 'application/octet-stream; charset=utf-8',
+					success: function(url) {
+						$('.flash').html('<p>Logged in succesfully<br>Redirecting...</p>')
+						setTimeout(function() {
+							window.location.href = "/";
+						}, 2000);
+					}
+				})
+			}
+
+			else if (authResult['error']) {
+				console.log('There was an error: ' + authResult['error']);
+			}
+		}
+	</script>
+
+	<script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
 {% endblock %}

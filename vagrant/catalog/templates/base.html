@@ -6,7 +6,7 @@
 	<link href="https://fonts.googleapis.com/css?family=Encode+Sans+Expanded" rel="stylesheet">
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<!-- {% block logn %}{% endblock %} -->
+	{% block meta %}{% endblock %}
 </head>
 <body>
 	<div class="wrapper">
@@ -25,6 +25,17 @@
 				{% endif %}
 			</span>
 		</nav>
+		<span class="flash">
+			{% with messages = get_flashed_messages() %}
+				{% if messages %}
+					<p>
+						{% for message in messages %}
+						<strong> {{ message }} </strong> 
+						{% endfor %}
+					</p>
+				{% endif %}
+			{% endwith %}
+		</span>
 		<main class="main">
 			{% block login %}
 			<aside class="categories">
@@ -33,17 +44,6 @@
 			</aside>
 			<div class="vertical-line"></div>
 			<section class="items">
-				<span class="flash">
-					{% with messages = get_flashed_messages() %}
-						{% if messages %}
-						<p>
-							{% for message in messages %}
-							<strong> {{ message }} </strong> 
-							{% endfor %}
-						</p>
-						{% endif %}
-					{% endwith %}
-				</span>
 				<h2>{% block section %}{% endblock %}</h2>
 				{% block content %}{% endblock %}
 			</section>
