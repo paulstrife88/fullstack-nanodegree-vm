@@ -16,7 +16,7 @@
 {% block content %}
 	<form action="{{ url_for('editItem', category_id = category.id, item_id = item.id )}}" method="post">
 		<p>Name:</p>
-		<input type="text" size="50" name="name" value="{{ item.name }}" required>
+		<input type="text" size="50" maxlength="250" name="name" value="{{ item.name }}" required>
 		<p>Category:</p>
 		<select name="category" required>
 			{% for i in categories %}
@@ -28,7 +28,7 @@
     		{% endfor %}
   		</select>
 		<p>Description:</p>
-		<textarea name="description" rows="5" cols="50" maxlength="250" required>{{ item.description }}</textarea>
+		<textarea name="description" rows="5" cols="50" maxlength="500" required>{{ item.description }}</textarea>
 		<br>
 		<input name="csrf" type="hidden" value="{{ session['state'] }}">
 		<input type="submit" value="Edit">

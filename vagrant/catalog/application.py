@@ -18,7 +18,8 @@ from flask import make_response
 app = Flask(__name__)
 auth = HTTPBasicAuth()
 
-CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())['web']['client_id']
+CLIENT_ID = json.loads(open('client_secrets.json',
+                            'r').read())['web']['client_id']
 APPLICATION_NAME = "Catalog App"
 
 engine = create_engine('sqlite:///catalog.db')
@@ -91,21 +92,20 @@ def login():
             return redirect(url_for('home'))
         else:
             state = ''.join(random.choice(string.ascii_uppercase +
-                    string.digits) for x in xrange(32))
+                            string.digits) for x in xrange(32))
             login_session['state'] = state
             flash('Something went wrong, incorrect email or username')
             return render_template('login.html', STATE=state)
     else:
         state = ''.join(random.choice(string.ascii_uppercase +
-                    string.digits) for x in xrange(32))
+                        string.digits) for x in xrange(32))
         login_session['state'] = state
         return render_template('login.html', STATE=state)
-
 
 # Authenticate an user with Google OAuth and create a new user based on
 # the information received
 # @app.route('/oauth2/')
-# def oauth2():  
+# def oauth2():
 #     if request.args.get('state') != login_session['state']:
 #         abort(401)
 #     flow = client.flow_from_clientsecrets(
@@ -137,6 +137,8 @@ def login():
 
 # Authenticate an user with Google OAuth and create a new user based on
 # the information received
+
+
 @app.route('/oauth2callback/', methods=['POST'])
 def oauth2callback():
     # Validate state token
@@ -189,8 +191,8 @@ def oauth2callback():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
-                                 200)
+        response = make_response(json.dumps("Current user is already \
+            connected."), 200)
         response.headers['Content-Type'] = 'application/json'
         return response
 
@@ -200,7 +202,7 @@ def oauth2callback():
     # Add an OAuth authenticated user information to the database and
     # update the session information
     if session.query(User).filter_by(
-        email=result['email']).first() is not None:
+            email=result['email']).first() is not None:
         login_session['email'] = result['email']
         login_session['auth_method'] = 'google'
         login_session['logged_in'] = True
@@ -212,15 +214,16 @@ def oauth2callback():
     flash('Logged in succesfully')
     return redirect(url_for('home'))
 
-# Perform logout and clear session for both local and external
-# authentication
+# Perform logout and clear session for of an authenticated user.
+
+
 @app.route('/logout/')
 def logout():
     if not login_session:
         flash('Already logged out')
         return redirect(url_for('home'))
     if login_session['auth_method'] == 'google':
-        url = ('https://accounts.google.com/o/oauth2/revoke?token=%s'
+        url = ("https://accounts.google.com/o/oauth2/revoke?token=%s"
                % login_session['access_token'])
         h = httplib2.Http()
         result = h.request(url, 'GET')[0]
