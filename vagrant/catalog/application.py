@@ -451,8 +451,7 @@ def deleteCategoryAPI(category_id):
     category = session.query(Category).filter_by(id=category_id).first()
     session.delete(category)
     session.commit()
-    return jsonify(Category=[category.serialize],
-                   message='category succesfully deleted'), 200
+    return jsonify(message='category succesfully deleted'), 200
 
 
 # API route to get the detailed information for a given item
@@ -495,6 +494,8 @@ def editItemAPI(category_id, item_id):
         name = request.json.get('name')
         description = request.json.get('description')
         newCategory_id = request.json.get('category_id')
+        if newCategory_id is None:
+            newCategory_id = category_id
         if name is None:
             abort(400)
         item.name = name
