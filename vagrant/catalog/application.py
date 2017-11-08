@@ -475,8 +475,6 @@ def newItemAPI(category_id):
     description = request.json.get('description')
     if name is None:
         abort(400)
-    if session.query(Item).filter_by(name=name).first() is not None:
-        return jsonify({'message': 'item already exists'})
     item = Item(name=name, description=description, category_id=category_id)
     session.add(item)
     session.commit()
@@ -494,16 +492,18 @@ def editItemAPI(category_id, item_id):
         name = request.json.get('name')
         description = request.json.get('description')
         newCategory_id = request.json.get('category_id')
+        if name is None:
+            name = item.name
+        if description is None:
+            description = item.description
         if newCategory_id is None:
             newCategory_id = category_id
-        if name is None:
-            abort(400)
         item.name = name
         item.description = description
+        category = session.query(Category).filter_by(id=newCategory_id).one()
         item.category_id = newCategory_id
         session.add(item)
         session.commit()
-        category = session.query(Category).filter_by(id=newCategory_id).one()
     except:
         return jsonify(message='item not found')
     return jsonify(Category=[category.serialize], Item=[item.serialize],
