@@ -13,7 +13,6 @@ import requests
 
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
-from flask import make_response
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
@@ -102,101 +101,35 @@ def login():
         login_session['state'] = state
         return render_template('login.html', STATE=state)
 
-# Authenticate an user with Google OAuth and create a new user based on
-# the information received
-# @app.route('/oauth2/')
-# def oauth2():
-#     if request.args.get('state') != login_session['state']:
-#         abort(401)
-#     flow = client.flow_from_clientsecrets(
-#         'client_secrets.json',
-#         scope='openid email profile',
-#         redirect_uri=url_for('categories', _external=True))
-#     credentials = flow.step2_exchange(auth_code)
-#     if 'code' not in request.args:
-#         auth_uri = flow.step1_get_authorize_url()
-#         return redirect(auth_uri)
-#     auth_code = request.args.get('code')
-#     login_session['access_token'] = credentials.access_token
-#     url = ('https://www.googleapis.com/oauth2/v1/userinfo?'
-#             'alt=json&access_token=%s' % login_session['access_token'])
-#     h = httplib2.Http()
-#     result = json.loads(h.request(url, 'GET')[1])
-#     if session.query(User).filter_by(
-#         email=result['email']).first() is not None:
-#         login_session['email'] = result['email']
-#         login_session['auth_method'] = 'google'
-#         login_session['logged_in'] = True
-#     else:
-#         user = User(email=email)
-#         login_session['auth_method'] = 'google'
-#         session.add(user)
-#         session.commit()
-#     flash('Logged in succesfully')
-#     return redirect(url_for('home'))
 
-# Authenticate an user with Google OAuth and create a new user based on
-# the information received
-
-
+# Callback function to handle Google OAuth login
 @app.route('/oauth2callback/', methods=['POST'])
 def oauth2callback():
-    # Validate state token
+    # Validate state token for CSRF
     if request.args.get('state') != login_session['state']:
-        response = make_response(json.dumps('Invalid state parameter.'), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return jsonify(message='Invalid state parameter'), 401
     # Obtain authorization code
     code = request.data
 
     try:
-        # Upgrade the authorization code into a credentials object
+        # Try to get an access token with the obtained authorization code
         oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
-        response = make_response(
-            json.dumps('Failed to upgrade the authorization code.'), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return jsonify(message='Failed to get an access token'), 401
 
-    # Check that the access token is valid.
+    # Check the access token validity
     access_token = credentials.access_token
     url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
            % access_token)
     h = httplib2.Http()
     result = json.loads(h.request(url, 'GET')[1])
-    # If there was an error in the access token info, abort.
+    # Output any relevant error in case of failure
     if result.get('error') is not None:
-        response = make_response(json.dumps(result.get('error')), 500)
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return jsonify(message=result.get('error')), 500
 
-    # Verify that the access token is used for the intended user.
-    gplus_id = credentials.id_token['sub']
-    if result['user_id'] != gplus_id:
-        response = make_response(
-            json.dumps("Token's user ID doesn't match given user ID."), 401)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-
-    # Verify that the access token is valid for this app.
-    if result['issued_to'] != CLIENT_ID:
-        response = make_response(
-            json.dumps("Token's client ID does not match app's."), 401)
-        print "Token's client ID does not match app's."
-        response.headers['Content-Type'] = 'application/json'
-        return response
-
-    stored_access_token = login_session.get('access_token')
-    stored_gplus_id = login_session.get('gplus_id')
-    if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps("Current user is already \
-            connected."), 200)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-
-    # Store the access token in the session for later use.
+    # Store the access token in the session
     login_session['access_token'] = credentials.access_token
 
     # Add an OAuth authenticated user information to the database and
@@ -216,9 +149,8 @@ def oauth2callback():
     flash('Logged in succesfully')
     return redirect(url_for('home'))
 
+
 # Perform logout and clear session for of an authenticated user.
-
-
 @app.route('/logout/')
 def logout():
     if not login_session:
