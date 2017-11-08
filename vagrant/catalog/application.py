@@ -208,6 +208,7 @@ def oauth2callback():
         login_session['logged_in'] = True
     else:
         user = User(email=result['email'])
+        login_session['email'] = result['email']
         login_session['auth_method'] = 'google'
         login_session['logged_in'] = True
         session.add(user)
@@ -303,10 +304,14 @@ def deleteCategory(category_id):
         flash('You need to be logged in to perform this action.')
         return redirect(url_for('login'))
     category = session.query(Category).filter_by(id=category_id).one()
+    items = session.query(Item).filter_by(category_id=category_id).all()
     if request.method == 'POST':
         if login_session['state'] == request.form['csrf']:
             session.delete(category)
             session.commit()
+            for item in items:
+                session.delete(item)
+                session.commit()
             return redirect(url_for('home'))
         else:
             abort(403)
@@ -450,6 +455,10 @@ def editCategoryAPI(category_id):
 @auth.login_required
 def deleteCategoryAPI(category_id):
     category = session.query(Category).filter_by(id=category_id).first()
+    items = session.query(Item).filter_by(category_id=category_id).all()
+    for item in items:
+        session.delete(item)
+        session.commit()
     session.delete(category)
     session.commit()
     return jsonify(message='category succesfully deleted'), 200
