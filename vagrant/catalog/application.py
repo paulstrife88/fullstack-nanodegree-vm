@@ -207,8 +207,9 @@ def oauth2callback():
         login_session['auth_method'] = 'google'
         login_session['logged_in'] = True
     else:
-        user = User(email=email)
+        user = User(email=result['email'])
         login_session['auth_method'] = 'google'
+        login_session['logged_in'] = True
         session.add(user)
         session.commit()
     flash('Logged in succesfully')
