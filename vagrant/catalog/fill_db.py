@@ -944,6 +944,7 @@ items = [item1, item2, item3, item4, item5, item6, item7, item8, item9, item10,
          item99, item100, item101, item102, item103, item104, item105, item106,
          item107, item108, item109, item110]
 
+# Randomize items order and add them to database
 randomized_items_order = random.shuffle(items)
 
 for item in items:
