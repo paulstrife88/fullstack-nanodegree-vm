@@ -15,8 +15,8 @@ To use this application you will need to download and install the following soft
 
 After you installed the softwares required as per in the prerequisites please follow the steps below:
 
-1. Clone this repository to your local machine `git@github.com:paulstrife88/fullstack-nanodegree-vm.git`
-2. Move to the `vagrant` directory inside the repository.
+1. Clone this repository to your local machine `git clone git@github.com:paulstrife88/fullstack-nanodegree-vm.git`
+2. Move to the `fullstack-nanodegree-vm/vagrant` directory inside the repository.
 3. Type `vagrant up`. (This will download and prepare the virtual machine environment)
 4. Once the the virtual machine is ready, use the `vagrant ssh` command to log into it.
 5. Change directory to `/vagrant/catalog`.
