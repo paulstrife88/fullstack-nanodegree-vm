@@ -28,8 +28,9 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 # Global variable to store the categories as they are
-# use used in near every template
+# use used in near every template.
 categories = session.query(Category)
+
 
 # Decorator to check for authentication
 def login_required(f):
@@ -42,8 +43,39 @@ def login_required(f):
             return redirect(url_for('login'))
     return decorated_function
 
+
+# Decorator to check if an user is authorized to perform actions on a given
+# item or category. Function valid also for API.
+def authorization_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check if there's a login session to divide web ui from api user
+        if not login_session:
+            user_id = g.user.id
+            api = True
+        else:
+            login_session['user_id']
+        # Check if the action to perform is for an item or for a category
+        if 'item_id' in kwargs:
+            item = session.query(Item).filter_by(id=kwargs['item_id']).first()
+        elif 'category_id' in kwargs:
+            item = session.query(Category).filter_by(
+                    id=kwargs['category_id']).first()
+        else:
+            abort(400)
+        if item.user_id is user_id:
+            return f(*args, **kwargs)
+        else:
+            if api:
+                return jsonify(message='Not authorized'), 401
+            else:
+                flash('You are not authorized to perform this action.')
+                return redirect(url_for('home'))
+    return decorated_function
+
+
 # Function to authenticate an user with local authentication and
-# token authentication
+# token authentication.
 @auth.verify_password
 def verify_password(email_or_token, password):
     user_id = User.verify_auth_token(email_or_token)
@@ -95,6 +127,8 @@ def login():
         password = request.form['password']
         if (verify_password(email, password) and
                 login_session['state'] == request.form['csrf']):
+            login_session['user_id'] = session.query(User).filter_by(
+                                        email=email).first().id
             login_session['email'] = email
             login_session['logged_in'] = True
             login_session['auth_method'] = 'local'
@@ -145,8 +179,9 @@ def oauth2callback():
 
     # Add an OAuth authenticated user information to the database and
     # update the session information
-    if session.query(User).filter_by(
-            email=result['email']).first() is not None:
+    user = session.query(User).filter_by(email=result['email']).first()
+    if user is not None:
+        login_session['user_id'] = user.id
         login_session['email'] = result['email']
         login_session['auth_method'] = 'google'
         login_session['logged_in'] = True
@@ -157,7 +192,8 @@ def oauth2callback():
         login_session['logged_in'] = True
         session.add(user)
         session.commit()
-    flash('Logged in succesfully')
+        login_session['user_id'] = user.id
+    flash('Logged in succesfully.')
     return redirect(url_for('home'))
 
 
@@ -177,6 +213,7 @@ def logout():
     login_session.pop('email', None)
     login_session.pop('logged_in', None)
     login_session.pop('state', None)
+    flash('Logged out succesfully.')
     return redirect(url_for('home'))
 
 
@@ -207,11 +244,13 @@ def showCategory(category_id):
 def newCategory():
     if request.method == 'POST':
         if login_session['state'] == request.form['csrf']:
-            newCategory = Category(name=request.form['name'])
-            session.add(newCategory)
+            category = Category(name=request.form['name'],
+                                user_id=login_session['user_id'])
+            session.add(category)
             session.commit()
+            flash('New category created succesfully.')
             return redirect(url_for('showCategory',
-                                    category_id=newCategory.id))
+                                    category_id=category.id))
         else:
             abort(403)
     else:
@@ -221,13 +260,16 @@ def newCategory():
 # Render a template to edit an existing category
 @app.route('/categories/<int:category_id>/edit/', methods=['GET', 'POST'])
 @login_required
+@authorization_required
 def editCategory(category_id):
     category = session.query(Category).filter_by(id=category_id).one()
     if request.method == 'POST':
         if login_session['state'] == request.form['csrf']:
             category.name = request.form['name']
+            category.user_id = login_session['user_id']
             session.add(category)
             session.commit()
+            flash('Category edited succesfully.')
             return redirect(url_for('showCategory', category_id=category.id))
         else:
             abort(403)
@@ -239,6 +281,7 @@ def editCategory(category_id):
 # Render a page to confirm the delete operation for the given category
 @app.route('/categories/<int:category_id>/delete/', methods=['GET', 'POST'])
 @login_required
+@authorization_required
 def deleteCategory(category_id):
     category = session.query(Category).filter_by(id=category_id).one()
     items = session.query(Item).filter_by(category_id=category_id).all()
@@ -246,9 +289,7 @@ def deleteCategory(category_id):
         if login_session['state'] == request.form['csrf']:
             session.delete(category)
             session.commit()
-            for item in items:
-                session.delete(item)
-                session.commit()
+            flash('Category deleted succesfully.')
             return redirect(url_for('home'))
         else:
             abort(403)
@@ -277,9 +318,11 @@ def newItem(category_id):
         if login_session['state'] == request.form['csrf']:
             newItem = Item(name=request.form['name'],
                            category_id=request.form['category'],
-                           description=request.form['description'])
+                           description=request.form['description'],
+                           user_id=login_session['user_id'])
             session.add(newItem)
             session.commit()
+            flash('New item added succesfully.')
             return redirect(url_for('showItem', category_id=category.id,
                                     item_id=newItem.id))
         else:
@@ -293,6 +336,7 @@ def newItem(category_id):
 @app.route('/categories/<int:category_id>/items/<int:item_id>/edit/',
            methods=['GET', 'POST'])
 @login_required
+@authorization_required
 def editItem(category_id, item_id):
     category = session.query(Category).filter_by(id=category_id).one()
     item = session.query(Item).filter_by(id=item_id).one()
@@ -301,8 +345,10 @@ def editItem(category_id, item_id):
             item.name = request.form['name']
             item.category_id = request.form['category']
             item.description = request.form['description']
+            item.user_id = login_session['user_id']
             session.add(item)
             session.commit()
+            flash('Item edited succesfully.')
             return redirect(url_for('showItem', category_id=category.id,
                                     item_id=item.id))
         else:
@@ -316,6 +362,7 @@ def editItem(category_id, item_id):
 @app.route('/categories/<int:category_id>/items/<int:item_id>/delete/',
            methods=['GET', 'POST'])
 @login_required
+@authorization_required
 def deleteItem(category_id, item_id):
     category = session.query(Category).filter_by(id=category_id).one()
     item = session.query(Item).filter_by(id=item_id).one()
@@ -324,6 +371,7 @@ def deleteItem(category_id, item_id):
             session.delete(item)
             session.commit()
             items = session.query(Item).filter_by(category_id=category.id)
+            flash('Item deleted succesfully.')
             return redirect(url_for('showCategory', category_id=category.id))
         else:
             abort(403)
@@ -359,7 +407,7 @@ def newCategoryAPI():
         abort(400)
     if session.query(Category).filter_by(name=name).first() is not None:
         return jsonify({'message': 'category already exists'})
-    category = Category(name=name)
+    category = Category(name=name, user_id=g.user.id)
     session.add(category)
     session.commit()
     return jsonify(Category=[category.serialize],
@@ -369,6 +417,7 @@ def newCategoryAPI():
 # API route to edit an existing category
 @app.route('/api/v1/categories/<int:category_id>/edit/', methods=['POST'])
 @auth.login_required
+@authorization_required
 def editCategoryAPI(category_id):
     name = request.json.get('name')
     if name is None:
@@ -384,6 +433,7 @@ def editCategoryAPI(category_id):
 # API route to delete a given category
 @app.route('/api/v1/categories/<int:category_id>/delete/', methods=['POST'])
 @auth.login_required
+@authorization_required
 def deleteCategoryAPI(category_id):
     category = session.query(Category).filter_by(id=category_id).first()
     items = session.query(Item).filter_by(category_id=category_id).all()
@@ -416,7 +466,8 @@ def newItemAPI(category_id):
     description = request.json.get('description')
     if name is None:
         abort(400)
-    item = Item(name=name, description=description, category_id=category_id)
+    item = Item(name=name, description=description,
+                category_id=category_id, user_id=g.user.id)
     session.add(item)
     session.commit()
     return jsonify(Item=[item.serialize],
@@ -427,6 +478,7 @@ def newItemAPI(category_id):
 @app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/edit/',
            methods=['POST'])
 @auth.login_required
+@authorization_required
 def editItemAPI(category_id, item_id):
     try:
         item = session.query(Item).filter_by(id=item_id).first()
@@ -455,6 +507,7 @@ def editItemAPI(category_id, item_id):
 @app.route('/api/v1/categories/<int:category_id>/items/<int:item_id>/delete/',
            methods=['POST'])
 @auth.login_required
+@authorization_required
 def deleteItemAPI(category_id, item_id):
     try:
         item = session.query(Item).filter_by(id=item_id).first()

@@ -19,6 +19,8 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     email = Column(String(50), nullable=False)
     password_hash = Column(String(64))
+    categories = relationship("Category", cascade="all, delete-orphan")
+    items = relationship("Item", cascade="all, delete-orphan")
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
@@ -50,12 +52,16 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship(User)
+    items = relationship("Item", cascade="all, delete-orphan")
 
     @property
     def serialize(self):
         return {
             'id': self.id,
-            'name': self.name
+            'name': self.name,
+            'user_id': self.user_id,
         }
 
 
@@ -68,6 +74,8 @@ class Item(Base):
     description = Column(String(500), nullable=False)
     category_id = Column(Integer, ForeignKey('category.id'))
     category = relationship(Category)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship(User)
 
     @property
     def serialize(self):
@@ -76,7 +84,8 @@ class Item(Base):
             'name': self.name,
             'description': self.description,
             'category_id': self.category_id,
-            'category_name': self.category.name
+            'category_name': self.category.name,
+            'user_id': self.user_id,
         }
 
 engine = create_engine('sqlite:///catalog.db')
