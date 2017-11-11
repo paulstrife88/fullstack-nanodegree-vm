@@ -54,17 +54,25 @@ def authorization_required(f):
             user_id = g.user.id
             api = True
         else:
-            login_session['user_id']
-        # Check if the action to perform is for an item or for a category
-        if 'item_id' in kwargs:
-            item = session.query(Item).filter_by(id=kwargs['item_id']).first()
-        elif 'category_id' in kwargs:
-            item = session.query(Category).filter_by(
-                    id=kwargs['category_id']).first()
-        else:
-            abort(400)
-        if item.user_id is user_id:
-            return f(*args, **kwargs)
+            user_id = login_session['user_id']
+            api = False
+        user = session.query(User).filter_by(id=user_id).first()
+        # Check if the user is an administrator and on what type of object
+        # the user is trying to perform the operation
+        if user.isAdmin:
+            if 'item_id' in kwargs:
+                item = session.query(Item).filter_by(
+                        id=kwargs['item_id']).first()
+            elif 'category_id' in kwargs:
+                item = session.query(Category).filter_by(
+                        id=kwargs['category_id']).first()
+            else:
+                item = None
+            if item is not None:
+                if item.user_id is user_id:
+                    return f(*args, **kwargs)
+            else:
+                return f(*args, **kwargs)
         else:
             if api:
                 return jsonify(message='Not authorized'), 401
@@ -111,6 +119,10 @@ def signup():
             flash('User already existing, please try to login')
             return redirect(url_for('login'))
         user = User(email=email)
+        if request.form.get('isAdmin') is None:
+            user.isAdmin = False
+        else:
+            user.isAdmin = True
         user.hash_password(password)
         session.add(user)
         session.commit()
@@ -190,6 +202,7 @@ def oauth2callback():
         login_session['email'] = result['email']
         login_session['auth_method'] = 'google'
         login_session['logged_in'] = True
+        user.isAdmin = True
         session.add(user)
         session.commit()
         login_session['user_id'] = user.id
@@ -241,6 +254,7 @@ def showCategory(category_id):
 # Render a template to create a new category
 @app.route('/categories/new', methods=['GET', 'POST'])
 @login_required
+@authorization_required
 def newCategory():
     if request.method == 'POST':
         if login_session['state'] == request.form['csrf']:
@@ -312,6 +326,7 @@ def showItem(category_id, item_id):
 @app.route('/categories/<int:category_id>/items/new/',
            methods=['GET', 'POST'])
 @login_required
+@authorization_required
 def newItem(category_id):
     category = session.query(Category).filter_by(id=category_id).one()
     if request.method == 'POST':
@@ -401,6 +416,7 @@ def showCategoryAPI(category_id):
 # API route to create a new category
 @app.route('/api/v1/categories/new/', methods=['POST'])
 @auth.login_required
+@authorization_required
 def newCategoryAPI():
     name = request.json.get('name')
     if name is None:
@@ -461,6 +477,7 @@ def showItemAPI(item_id, *args, **kwargs):
 # API route to add a new item inside a given category
 @app.route('/api/v1/categories/<int:category_id>/items/new/', methods=['POST'])
 @auth.login_required
+@authorization_required
 def newItemAPI(category_id):
     name = request.json.get('name')
     description = request.json.get('description')

@@ -1,6 +1,7 @@
 import random
 import string
-from sqlalchemy import Column, ForeignKey, Integer, String, create_engine
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, \
+                       create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from passlib.apps import custom_app_context as pwd_context
@@ -19,6 +20,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     email = Column(String(50), nullable=False)
     password_hash = Column(String(64))
+    isAdmin = Column(Boolean, default=False, nullable=False)
     categories = relationship("Category", cascade="all, delete-orphan")
     items = relationship("Item", cascade="all, delete-orphan")
 
